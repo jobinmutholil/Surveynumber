@@ -1,0 +1,745 @@
+```html
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kerala Survey & Village Tracker</title>
+    
+    <!-- PWA Meta Tags for Mobile Install -->
+    <meta name="theme-color" content="#2563eb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kerala Survey">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='%232563eb'/><path d='M256 96c-61.9 0-112 50.1-112 112 0 84 112 208 112 208s112-124 112-208c0-61.9-50.1-112-112-112zm0 152c-22.1 0-40-17.9-40-40s17.9-40 40-40 40 17.9 40 40-17.9 40-40 40z' fill='white'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='%232563eb'/><path d='M256 96c-61.9 0-112 50.1-112 112 0 84 112 208 112 208s112-124 112-208c0-61.9-50.1-112-112-112zm0 152c-22.1 0-40-17.9-40-40s17.9-40 40-40 40 17.9 40 40-17.9 40-40 40z' fill='white'/></svg>">
+    <link id="manifestLink" rel="manifest" href="">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+        #map { height: 100vh; width: 100%; }
+
+        /* Floating Search Bar */
+        .floating-search {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 5px 5px 5px 15px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            width: calc(100% - 130px); 
+            max-width: 400px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .floating-search input {
+            border: none;
+            outline: none;
+            padding: 10px 0;
+            flex: 1;
+            font-size: 14px;
+            background: transparent;
+            color: #1e293b;
+        }
+        
+        .floating-search button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .floating-search button:hover { background: #1d4ed8; }
+
+        /* Floating Action Buttons Stack (Right Side) */
+        .fab-container {
+            position: absolute;
+            bottom: 30px;
+            right: 15px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .map-fab {
+            background: white;
+            color: #2563eb;
+            border: none;
+            border-radius: 50%;
+            width: 52px;
+            height: 52px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.28);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .map-fab:active { transform: scale(0.95); }
+        .map-fab:hover { background: #f1f5f9; }
+
+        .map-fab.install-fab {
+            background: #16a34a;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        .map-fab.share-fab {
+            background: #2563eb;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.6); }
+            70% { box-shadow: 0 0 0 12px rgba(22, 163, 74, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+        }
+
+        /* Share Details Button inside Popup */
+        .popup-share-btn {
+            margin-top: 8px;
+            width: 100%;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .popup-share-btn:hover { background: #1d4ed8; }
+
+        /* Install Instructions Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            z-index: 3000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(3px);
+        }
+        .modal-card {
+            background: white;
+            border-radius: 16px;
+            max-width: 360px;
+            width: 100%;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        .modal-card h3 { margin: 0 0 10px 0; color: #2563eb; font-size: 18px; }
+        .modal-close-btn {
+            margin-top: 15px;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background: #2563eb;
+            color: white;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Custom Toast Notification */
+        .toast-msg {
+            position: fixed;
+            bottom: 95px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            z-index: 2000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 80%;
+        }
+
+        /* Custom Location Marker */
+        .custom-location-marker {
+            background-color: #007bff; border: 2px solid white; border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        /* Custom Popup Styling */
+        .leaflet-popup-content {
+            margin: 13px 19px;
+            line-height: 1.6;
+            font-size: 14px;
+            color: #0f172a;
+        }
+        .leaflet-popup-content b {
+            color: #1e293b;
+        }
+
+        /* Adjust Leaflet layer control position */
+        .leaflet-top.leaflet-right { top: 5px; right: 5px; }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Village Search Bar -->
+    <div class="floating-search">
+        <input type="text" id="villageSearchInput" placeholder="🏘️ Village Search (ഉദാ: Koruthodu)" onkeypress="handleVillageKeyPress(event)">
+        <button onclick="searchVillage()" title="Search"><i class="fa-solid fa-search"></i></button>
+    </div>
+
+    <!-- Floating Action Buttons (Install, Share, GPS) -->
+    <div class="fab-container">
+        <button id="installBtn" class="map-fab install-fab" title="ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്യുക" onclick="triggerInstall()">
+            <i class="fa-solid fa-download"></i>
+        </button>
+        <button id="shareBtn" class="map-fab share-fab" title="ആപ്പ് ഷെയർ ചെയ്യുക" onclick="shareApp()">
+            <i class="fa-solid fa-share-nodes"></i>
+        </button>
+        <button id="locateBtn" class="map-fab" title="എന്റെ ലൊക്കേഷൻ">
+            <i class="fa-solid fa-location-crosshairs"></i>
+        </button>
+    </div>
+
+    <!-- Install Guide Modal (Fallback for iOS/Browsers) -->
+    <div id="installModal" class="modal-overlay" onclick="closeInstallModal()">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <h3>📲 ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്യാൻ</h3>
+            <p style="font-size: 14px; margin: 0;">
+                <b>Android (Chrome):</b><br>
+                1. മുകളിലെ <b>⋮ (മൂന്ന് ഡോട്ടുകൾ)</b> അമർത്തുക.<br>
+                2. <b>"Add to Home screen"</b> അല്ലെങ്കിൽ <b>"Install app"</b> തിരഞ്ഞെടുക്കുക.<br><br>
+                <b>iPhone (Safari):</b><br>
+                1. താഴെയുള്ള <b>Share</b> ബട്ടൺ അമർത്തുക.<br>
+                2. <b>"Add to Home Screen"</b> തിരഞ്ഞെടുക്കുക.
+            </p>
+            <button class="modal-close-btn" onclick="closeInstallModal()">മനസ്സിലായി</button>
+        </div>
+    </div>
+
+    <!-- Custom Notification Toast -->
+    <div id="toast" class="toast-msg"></div>
+
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // ---------- 1. Dynamic Web App Manifest & PWA Setup ----------
+        const appIconSvg = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='%232563eb'/><path d='M256 96c-61.9 0-112 50.1-112 112 0 84 112 208 112 208s112-124 112-208c0-61.9-50.1-112-112-112zm0 152c-22.1 0-40-17.9-40-40s17.9-40 40-40 40 17.9 40 40-17.9 40-40 40z' fill='white'/></svg>";
+        const manifestData = {
+            name: "Kerala Survey & Village Tracker",
+            short_name: "Kerala Survey",
+            description: "കേരളത്തിലെ വില്ലേജ് അതിർത്തികളും സർവ്വേ നമ്പറുകളും കണ്ടെത്താനുള്ള ആപ്പ്",
+            start_url: window.location.href,
+            display: "standalone",
+            background_color: "#ffffff",
+            theme_color: "#2563eb",
+            icons: [
+                { src: appIconSvg, sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" },
+                { src: appIconSvg, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+            ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+        document.getElementById('manifestLink').href = URL.createObjectURL(manifestBlob);
+
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBtn').style.display = 'flex';
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredPrompt = null;
+            document.getElementById('installBtn').style.display = 'none';
+            showToast('ആപ്പ് വിജയകരമായി ഇൻസ്റ്റാൾ ചെയ്തു! 🎉');
+        });
+
+        // ആപ്പ് ഇതിനകം ഇൻസ്റ്റാൾ ചെയ്തതാണെങ്കിൽ (Standalone mode) ഇൻസ്റ്റാൾ ബട്ടൺ മറയ്ക്കുക
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            document.getElementById('installBtn').style.display = 'none';
+        }
+
+        async function triggerInstall() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    deferredPrompt = null;
+                }
+            } else {
+                document.getElementById('installModal').style.display = 'flex';
+            }
+        }
+
+        function closeInstallModal() {
+            document.getElementById('installModal').style.display = 'none';
+        }
+
+        // ---------- 2. Share App & Share Survey Location ----------
+        let lastSelectedDetails = null;
+
+        async function shareApp() {
+            const center = map.getCenter();
+            const shareUrl = `${window.location.origin}${window.location.pathname}?lat=${center.lat.toFixed(5)}&lng=${center.lng.toFixed(5)}&z=${map.getZoom()}`;
+            const shareData = {
+                title: 'Kerala Survey & Village Tracker',
+                text: '🗺️ കേരളത്തിലെ വില്ലേജ്, സർവ്വേ നമ്പർ വിവരങ്ങൾ ഭൂപടത്തിൽ നേരിട്ട് കാണാം:',
+                url: shareUrl
+            };
+
+            if (navigator.share) {
+                try {
+                    await navigator.share(shareData);
+                } catch (err) {
+                    console.log('Share cancelled');
+                }
+            } else {
+                navigator.clipboard.writeText(`${shareData.text} ${shareUrl}`);
+                showToast('ലിങ്ക് കോപ്പി ചെയ്തു! ഇനി എവിടെയും പേസ്റ്റ് ചെയ്ത് ഷെയർ ചെയ്യാം 📋');
+            }
+        }
+
+        async function shareLocationDetails() {
+            if (!lastSelectedDetails) return;
+            const { village, survey, taluk, district, lat, lon } = lastSelectedDetails;
+            const appLink = `${window.location.origin}${window.location.pathname}?lat=${lat.toFixed(5)}&lng=${lon.toFixed(5)}&z=17`;
+            const gmapLink = `https://www.google.com/maps?q=${lat},${lon}`;
+
+            const cleanVillage = village.replace(/<[^>]*>?/gm, '');
+            const text = `📍 *ഭൂമി വിവരങ്ങൾ (Kerala Survey Tracker)*\n🏘️ വില്ലേജ്: ${cleanVillage}\n🔢 സർവ്വേ നമ്പർ: ${survey || 'ലഭ്യമല്ല'}\n📍 താലൂക്ക്: ${taluk}\n🏛️ ജില്ല: ${district}\n\n🗺️ സർവ്വേ മാപ്പ് ലിങ്ക്: ${appLink}\n🧭 Google Maps: ${gmapLink}`;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: `Survey No: ${survey}`, text: text });
+                } catch (err) {
+                    console.log('Share cancelled');
+                }
+            } else {
+                navigator.clipboard.writeText(text);
+                showToast('സർവ്വേ വിവരങ്ങൾ കോപ്പി ചെയ്തു! 📋');
+            }
+        }
+
+        // ---------- Toast Notification Helper ----------
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 4000);
+        }
+
+        // ---------- Map Initialization (Supports Shared URL Coordinates) ----------
+        const urlParams = new URLSearchParams(window.location.search);
+        const initLat = parseFloat(urlParams.get('lat')) || 9.6675;
+        const initLng = parseFloat(urlParams.get('lng')) || 76.8256;
+        const initZoom = parseInt(urlParams.get('z')) || 15;
+
+        const map = L.map('map', { zoomControl: false }).setView([initLat, initLng], initZoom); 
+        
+        // Move Zoom control to bottom-left
+        L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+        // Base Layers
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19, attribution: '© OpenStreetMap contributors'
+        });
+
+        const satellite = L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            { maxZoom: 19, attribution: 'Tiles © Esri' }
+        );
+
+        const googleStreets = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '© Google Maps'
+        });
+
+        // Default Base Map
+        googleStreets.addTo(map);
+
+        // ---------- Custom Pane for Village Boundary ----------
+        map.createPane('villagePane');
+        map.getPane('villagePane').style.filter = 'sepia(100%) hue-rotate(-45deg) saturate(400%) brightness(50%) contrast(150%)';
+
+        // ---------- Bhuvan WMS Layers ----------
+        const cadastralLayer = L.tileLayer.wms('https://bhuvan-panchayat3.nrsc.gov.in/geoserver/gwc/service/wms', {
+            layers: 'v3:cadastral', 
+            format: 'image/png', transparent: true, version: '1.1.1',
+            minZoom: 8, maxZoom: 20, attribution: '© ISRO Bhuvan Panchayat'
+        }).addTo(map);
+
+        const bhuvanVillageLayer1 = L.tileLayer.wms('https://bhuvan-panchayat3.nrsc.gov.in/geoserver/gwc/service/wms', {
+            layers: 'v3:village',
+            format: 'image/png', transparent: true, version: '1.1.1',
+            minZoom: 5, maxZoom: 20, pane: 'villagePane', 
+            attribution: '© ISRO Bhuvan Panchayat'
+        }).addTo(map);
+
+        // ---------- Layer Control ----------
+        L.control.layers(
+            { "🗺️ Google Streets": googleStreets, "🛰️ Satellite": satellite, "🛣️ OpenStreetMap": osm },
+            { "📜 Survey Numbers": cadastralLayer, "🏛️ Village Boundary": bhuvanVillageLayer1 },
+            { position: 'topright' }
+        ).addTo(map);
+
+        // ---------- Promise-based WMS GetFeatureInfo (Direct GeoServer WMS & GWC Fallback) ----------
+        async function getWMSFeaturesInfo(layerName, lat, lon, featureCount = 10, buffer = 5) {
+            const size = map.getSize();
+            const bounds = map.getBounds();
+            const sw = bounds.getSouthWest();
+            const ne = bounds.getNorthEast();
+            const bbox = `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`;
+            
+            const point = map.latLngToContainerPoint(L.latLng(lat, lon));
+            const x = Math.round(point.x);
+            const y = Math.round(point.y);
+            
+            const endpoints = [
+                `https://bhuvan-panchayat3.nrsc.gov.in/geoserver/v3/wms`,
+                `https://bhuvan-panchayat3.nrsc.gov.in/geoserver/wms`,
+                `https://bhuvan-panchayat3.nrsc.gov.in/geoserver/gwc/service/wms`
+            ];
+
+            for (const baseUrl of endpoints) {
+                try {
+                    const jsonUrl = `${baseUrl}?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=${layerName}&QUERY_LAYERS=${layerName}&SRS=EPSG:4326&BBOX=${bbox}&WIDTH=${size.x}&HEIGHT=${size.y}&X=${x}&Y=${y}&INFO_FORMAT=application/json&FEATURE_COUNT=${featureCount}&BUFFER=${buffer}`;
+                    const res = await fetch(jsonUrl);
+                    if (res.ok) {
+                        const contentType = res.headers.get("content-type") || "";
+                        if (contentType.includes("application/json")) {
+                            const data = await res.json();
+                            if (data && data.features && data.features.length > 0) {
+                                return data.features.map(f => f.properties);
+                            }
+                        }
+                    }
+
+                    const htmlUrl = `${baseUrl}?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=${layerName}&QUERY_LAYERS=${layerName}&SRS=EPSG:4326&BBOX=${bbox}&WIDTH=${size.x}&HEIGHT=${size.y}&X=${x}&Y=${y}&INFO_FORMAT=text/html&FEATURE_COUNT=${featureCount}&BUFFER=${buffer}`;
+                    const htmlRes = await fetch(htmlUrl);
+                    if (htmlRes.ok) {
+                        const htmlText = await htmlRes.text();
+                        const parsedProps = parseHTMLFeatureInfo(htmlText);
+                        if (parsedProps.length > 0) {
+                            return parsedProps;
+                        }
+                    }
+                } catch (err) {
+                    console.warn(`WMS GetFeatureInfo attempt failed on ${baseUrl} for ${layerName}:`, err);
+                }
+            }
+            return [];
+        }
+
+        // ---------- Parse GeoServer HTML GetFeatureInfo Table if JSON is blocked ----------
+        function parseHTMLFeatureInfo(htmlText) {
+            const results = [];
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlText, 'text/html');
+                const tables = doc.querySelectorAll('table');
+                tables.forEach(table => {
+                    const headers = Array.from(table.querySelectorAll('th')).map(th => th.innerText.trim());
+                    const rows = table.querySelectorAll('tr');
+                    rows.forEach(row => {
+                        const cells = Array.from(row.querySelectorAll('td')).map(td => td.innerText.trim());
+                        if (cells.length === headers.length && headers.length > 0) {
+                            const obj = {};
+                            headers.forEach((h, i) => obj[h] = cells[i]);
+                            results.push(obj);
+                        }
+                    });
+                });
+            } catch (e) {
+                console.warn('Error parsing HTML GetFeatureInfo:', e);
+            }
+            return results;
+        }
+
+        // ---------- Helper to Extract Survey Number from Properties ----------
+        function extractSurveyNumber(propertiesList) {
+            if (!propertiesList || propertiesList.length === 0) return '';
+
+            const priorityKeys = [
+                'kide', 's_no', 'sno', 'sy_no', 'sur_no', 'survey_no', 'survey_num', 'survey', 
+                'plot_no', 'plot', 'khasra_no', 'khasra', 'parcel_no', 'parcel_id', 
+                'label', 'text', 'name', 'id_1', 'num'
+            ];
+
+            const ignoreKeywords = [
+                'bbox', 'geom', 'shape', 'area', 'len', 'perim', 'vill', 'taluk', 'tehsil', 
+                'dist', 'state', 'st_', 'dt_', 'th_', 'vl_', 'code', 'lgd', 'cen_', 'objectid', 'fid', 'gid'
+            ];
+
+            for (const props of propertiesList) {
+                for (const pKey of priorityKeys) {
+                    for (const key in props) {
+                        if (key.toLowerCase() === pKey || key.toLowerCase().includes(pKey)) {
+                            const val = String(props[key] ?? '').trim();
+                            if (val && val !== 'null' && val !== '0' && val !== 'undefined') {
+                                return val;
+                            }
+                        }
+                    }
+                }
+
+                for (const key in props) {
+                    const keyLower = key.toLowerCase();
+                    if (ignoreKeywords.some(ig => keyLower.includes(ig))) continue;
+
+                    const val = String(props[key] ?? '').trim();
+                    if (val && /^[0-9]{1,5}([\/\-][0-9A-Za-z]+)?$/.test(val) && val !== '0') {
+                        return val;
+                    }
+                }
+            }
+            return '';
+        }
+
+        // ---------- Helper to Extract Village Name from Properties ----------
+        function extractVillageName(propertiesList) {
+            for (const props of propertiesList) {
+                const villageKeys = [
+                    'GP_NAME', 'gp_name', 'PANCHAYAT', 'panchayat',
+                    'VILL_NAME', 'VILLAGE', 'village', 'v_name', 'vname', 'village_name', 'NAME', 'name'
+                ];
+                for (const vKey of villageKeys) {
+                    for (const key in props) {
+                        if (key.toLowerCase() === vKey.toLowerCase()) {
+                            const val = String(props[key] ?? '').trim();
+                            if (val && val !== 'null' && val !== 'undefined' && !/^[0-9]+$/.test(val)) {
+                                return val;
+                            }
+                        }
+                    }
+                }
+            }
+            return 'അജ്ഞാതം (Unknown)';
+        }
+
+        // ---------- Tap on Map to get Details (Village, Taluk, District, Survey No) ----------
+        map.on('click', async function(e) {
+            const lat = e.latlng.lat;
+            const lon = e.latlng.lng;
+            const currentZoom = map.getZoom();
+
+            const loadingPopup = L.popup()
+                .setLatLng(e.latlng)
+                .setContent('<div style="text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> വിവരങ്ങൾ കണ്ടെത്തുന്നു...</div>')
+                .openOn(map);
+
+            let villageName = 'അജ്ഞാതം (Unknown)';
+            let surveyNo = '';
+            let talukName = 'അജ്ഞാതം (Unknown)';
+            let districtName = 'അജ്ഞാതം (Unknown)';
+
+            try {
+                const [nomResult, villagePropsList, cadastralPropsList] = await Promise.all([
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=16&addressdetails=1&accept-language=en`)
+                        .then(r => r.json())
+                        .catch(() => null),
+                    getWMSFeaturesInfo('v3:village', lat, lon, 1, 1),
+                    getWMSFeaturesInfo('v3:cadastral', lat, lon, 10, 5)
+                ]);
+
+                let osmLocalName = '';
+                if (nomResult && nomResult.address) {
+                    const addr = nomResult.address;
+                    talukName = addr.county || addr.city_district || 'അജ്ഞാതം';
+                    districtName = addr.state_district || addr.district || 'അജ്ഞാതം';
+                    osmLocalName = addr.village || addr.town || addr.suburb || addr.hamlet || addr.locality || '';
+                }
+
+                let bhuvanVillage = 'അജ്ഞാതം (Unknown)';
+                if (villagePropsList.length > 0) {
+                    bhuvanVillage = extractVillageName(villagePropsList);
+                }
+
+                if (cadastralPropsList.length > 0) {
+                    surveyNo = extractSurveyNumber(cadastralPropsList);
+                    if (bhuvanVillage === 'അജ്ഞാതം (Unknown)') {
+                        const cadVillage = extractVillageName(cadastralPropsList);
+                        if (cadVillage !== 'അജ്ഞാതം (Unknown)') {
+                            bhuvanVillage = cadVillage;
+                        }
+                    }
+                }
+
+                if (osmLocalName && bhuvanVillage !== 'അജ്ഞാതം (Unknown)') {
+                    if (osmLocalName.toLowerCase() === bhuvanVillage.toLowerCase()) {
+                        villageName = osmLocalName;
+                    } else {
+                        villageName = `${osmLocalName} <span style="font-size:12px; color:#64748b;">(${bhuvanVillage})</span>`;
+                    }
+                } else if (osmLocalName) {
+                    villageName = osmLocalName;
+                } else {
+                    villageName = bhuvanVillage;
+                }
+
+                lastSelectedDetails = {
+                    village: villageName,
+                    survey: surveyNo,
+                    taluk: talukName,
+                    district: districtName,
+                    lat: lat,
+                    lon: lon
+                };
+
+                // --- Build Popup Content ---
+                let popupContent = `<div style="font-size: 14px; line-height: 1.8;">
+                    <b>🏘️ വില്ലേജ്:</b> ${villageName}<br>`;
+                
+                if (surveyNo) {
+                    popupContent += `<b>🔢 സർവ്വേ നമ്പർ:</b> <span style="color:#2563eb; font-weight:bold; font-size:16px;">${surveyNo}</span><br>`;
+                } else if (currentZoom < 14) {
+                    popupContent += `<b>🔢 സർവ്വേ നമ്പർ:</b> <span style="color:#f59e0b; font-size:12px;">(കൂടുതൽ സൂം ചെയ്യുക)</span><br>`;
+                } else {
+                    popupContent += `<b>🔢 സർവ്വേ നമ്പർ:</b> ലഭ്യമല്ല<br>`;
+                }
+
+                popupContent += `<b>📍 താലൂക്ക്:</b> ${talukName}<br>
+                    <b>🏛️ ജില്ല:</b> ${districtName}
+                    <button class="popup-share-btn" onclick="shareLocationDetails()">
+                        <i class="fa-solid fa-share-nodes"></i> ഈ വിവരം ഷെയർ ചെയ്യുക
+                    </button>
+                </div>`;
+                
+                loadingPopup.setContent(popupContent);
+
+            } catch (error) {
+                console.error('Error fetching details:', error);
+                loadingPopup.setContent('<span style="color:#ef4444;">വിവരങ്ങൾ കണ്ടെത്താൻ കഴിഞ്ഞില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക.</span>');
+            }
+        });
+
+        // ---------- Village Search (Locates the village on map) ----------
+        function searchVillage() {
+            const query = document.getElementById('villageSearchInput').value;
+            if (!query) return;
+
+            map.stopLocate();
+            map.closePopup();
+
+            const loadingPopup = L.popup()
+                .setLatLng(map.getCenter())
+                .setContent('<div style="text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> വില്ലേജ് തിരയുന്നു...</div>')
+                .openOn(map);
+
+            const searchQuery = query + " village Kerala";
+            
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+                        map.setView([lat, lon], 16); 
+                        
+                        L.marker([lat, lon])
+                            .addTo(map)
+                            .bindPopup(`<b>${data[0].display_name}</b>`)
+                            .openPopup();
+                            
+                        loadingPopup.close();
+                    } else {
+                        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`)
+                            .then(res => res.json())
+                            .then(fallbackData => {
+                                if (fallbackData && fallbackData.length > 0) {
+                                    const lat = parseFloat(fallbackData[0].lat);
+                                    const lon = parseFloat(fallbackData[0].lon);
+                                    map.setView([lat, lon], 16);
+                                    L.marker([lat, lon]).addTo(map).bindPopup(`<b>${fallbackData[0].display_name}</b>`).openPopup();
+                                    loadingPopup.close();
+                                } else {
+                                    loadingPopup.setContent('<span style="color:#ef4444;">വില്ലേജ് കണ്ടെത്താൻ കഴിഞ്ഞില്ല. ദയവായി ഇംഗ്ലീഷിൽ പേര് ടൈപ്പ് ചെയ്യുക.</span>');
+                                }
+                            });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    loadingPopup.setContent('<span style="color:#ef4444;">തിരയൽ പരാജയപ്പെട്ടു. ഇന്റർനെറ്റ് കണക്ഷൻ പരിശോധിക്കുക.</span>');
+                });
+        }
+
+        function handleVillageKeyPress(event) {
+            if (event.key === 'Enter') searchVillage();
+        }
+
+        // ---------- Live GPS Tracking ----------
+        let locationMarker;
+        let accuracyCircle;
+
+        function onLocationFound(e) {
+            let radius = e.accuracy / 2;
+
+            if (locationMarker) map.removeLayer(locationMarker);
+            if (accuracyCircle) map.removeLayer(accuracyCircle);
+
+            accuracyCircle = L.circle(e.latlng, radius, {
+                color: '#007bff', fillColor: '#007bff', fillOpacity: 0.15, weight: 2
+            }).addTo(map);
+
+            locationMarker = L.marker(e.latlng, {
+                icon: L.divIcon({
+                    className: 'custom-location-marker',
+                    iconSize: [16, 16],
+                    iconAnchor: [8, 8]
+                })
+            }).addTo(map).bindPopup("നിങ്ങളുടെ ലൊക്കേഷൻ").openPopup();
+
+            map.setView(e.latlng, 17);
+        }
+
+        function onLocationError(e) {
+            showToast("ലൊക്കേഷൻ ആക്സസ് നിഷേധിക്കപ്പെട്ടു. ദയവായി ജിപിഎസ് ഓൺ ചെയ്യുക.");
+        }
+
+        map.on('locationfound', onLocationFound);
+        map.on('locationerror', onLocationError);
+
+        document.getElementById('locateBtn').addEventListener('click', () => {
+            map.stopLocate(); 
+            map.closePopup();
+            map.locate({setView: true, maxZoom: 17, enableHighAccuracy: true});
+        });
+    </script>
+</body>
+</html>
+
+```
