@@ -1,0 +1,23 @@
+{
+  "name": "Kerala Survey & Village Tracker",
+  "short_name": "Kerala Survey",
+  "description": "കേരളത്തിലെ വില്ലേജ് അതിർത്തികളും സർവ്വേ നമ്പറുകളും കണ്ടെത്താനുള്ള ആപ്പ്",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExMCIgZmlsbD0iIzI1NjNlYiIvPjxwYXRoIGQ9Ik0yNTYgOTZjLTYxLjkgMC0xMTIgNTAuMS0xMTIgMTEyIDAgODQgMTEyIDIwOCAxMTIgMjA4czExMi0xMjQgMTEyLTIwOGMwLTYxLjktNTAuMS0xMTItMTEyLTExMnptMCAxNTJjLTIyLjEgMC00MC0xNy45LTQwLTQwczE3LjktNDAgNDAtNDAgNDAgMTcuOSA0MCA0MC0xNy45IDQwLTQwIDQweiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExMCIgZmlsbD0iIzI1NjNlYiIvPjxwYXRoIGQ9Ik0yNTYgOTZjLTYxLjkgMC0xMTIgNTAuMS0xMTIgMTEyIDAgODQgMTEyIDIwOCAxMTIgMjA4czExMi0xMjQgMTEyLTIwOGMwLTYxLjktNTAuMS0xMTItMTEyLTExMnptMCAxNTJjLTIyLjEgMC00MC0xNy45LTQwLTQwczE3LjktNDAgNDAtNDAgNDAgMTcuOSA0MCA0MC0xNy45IDQwLTQwIDQweiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
