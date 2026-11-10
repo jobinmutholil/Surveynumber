@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ml">
 <head>
@@ -28,22 +29,77 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
         #map { height: 100vh; width: 100%; }
 
-        .floating-search {
-            position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 1000;
-            background: rgba(255, 255, 255, 0.95); padding: 5px 5px 5px 15px; border-radius: 25px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); display: flex; align-items: center;
-            width: calc(100% - 130px); max-width: 400px; backdrop-filter: blur(5px);
+        /* Updated Dual Search Bar Styling */
+        .floating-search-container {
+            position: absolute; top: 12px; left: 12px; right: 62px; z-index: 1000;
+            max-width: 460px; margin: 0 auto;
+            background: rgba(255, 255, 255, 0.96); padding: 6px 8px; border-radius: 18px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22); display: flex; align-items: center;
+            gap: 6px; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.6);
         }
-        
-        .floating-search input {
-            border: none; outline: none; padding: 10px 0; flex: 1; font-size: 14px;
-            background: transparent; color: #1e293b;
+
+        .search-field {
+            display: flex; align-items: center; flex: 1.3; background: #f1f5f9;
+            border-radius: 12px; padding: 4px 10px; border: 1px solid #e2e8f0;
+            transition: border-color 0.2s, background 0.2s;
         }
-        
-        .floating-search button {
-            background: #2563eb; color: white; border: none; border-radius: 50%;
+        .search-field:focus-within {
+            border-color: #2563eb; background: #ffffff;
+        }
+        .search-field.survey-field {
+            flex: 0.9;
+        }
+
+        .search-field i {
+            color: #64748b; font-size: 13px; margin-right: 6px;
+        }
+
+        .search-field input {
+            border: none; outline: none; padding: 6px 0; width: 100%; font-size: 13px;
+            background: transparent; color: #1e293b; font-weight: 500;
+        }
+        .search-field input::placeholder {
+            color: #94a3b8; font-weight: normal;
+        }
+
+        .search-btn {
+            background: #2563eb; color: white; border: none; border-radius: 12px;
             width: 38px; height: 38px; display: flex; justify-content: center; align-items: center;
-            cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); flex-shrink: 0;
+            cursor: pointer; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35); flex-shrink: 0;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .search-btn:active { transform: scale(0.95); }
+
+        /* ---------- Live Compass Widget Styling ---------- */
+        .compass-widget {
+            position: absolute; top: 74px; right: 10px; z-index: 1000;
+            width: 58px; height: 58px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            cursor: pointer; user-select: none; backdrop-filter: blur(6px);
+            border: 2px solid rgba(37, 99, 235, 0.2);
+            transition: transform 0.15s ease, border-color 0.2s;
+        }
+        .compass-widget:active { transform: scale(0.94); }
+        .compass-widget.active-sensor {
+            border-color: #2563eb;
+        }
+        .compass-dial {
+            width: 48px; height: 48px; position: relative;
+            transition: transform 0.12s linear;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .compass-dial svg {
+            width: 100%; height: 100%; overflow: visible;
+        }
+        .compass-degree-badge {
+            position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.9); color: #ffffff;
+            font-size: 10px; font-weight: 700; padding: 2px 7px;
+            border-radius: 10px; white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            pointer-events: none; letter-spacing: 0.3px;
         }
 
         .fab-container {
@@ -89,9 +145,9 @@
 
         .toast-msg {
             position: fixed; bottom: 95px; left: 50%; transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.9); color: white; padding: 10px 20px;
+            background: rgba(15, 23, 42, 0.92); color: white; padding: 10px 20px;
             border-radius: 20px; font-size: 13px; z-index: 2000; display: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2); text-align: center; max-width: 80%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25); text-align: center; max-width: 85%;
         }
 
         .custom-location-marker {
@@ -99,14 +155,62 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
         .leaflet-popup-content { margin: 13px 19px; line-height: 1.6; font-size: 14px; color: #0f172a; }
-        .leaflet-top.leaflet-right { top: 5px; right: 5px; }
+        .leaflet-top.leaflet-right { top: 12px; right: 10px; }
+
+        @media (max-width: 420px) {
+            .floating-search-container {
+                padding: 5px 6px; gap: 4px;
+            }
+            .search-field { padding: 3px 7px; }
+            .search-field input { font-size: 12px; }
+            .search-btn { width: 34px; height: 34px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="floating-search">
-        <input type="text" id="villageSearchInput" placeholder="🏘️ Village Search (ഉദാ: Koruthodu)" onkeypress="handleVillageKeyPress(event)">
-        <button onclick="searchVillage()" title="Search"><i class="fa-solid fa-search"></i></button>
+    <!-- വില്ലേജ് & സർവ്വേ നമ്പർ സെർച്ച് ബാർ -->
+    <div class="floating-search-container">
+        <div class="search-field">
+            <i class="fa-solid fa-city"></i>
+            <input type="text" id="villageSearchInput" placeholder="വില്ലേജ് (ഉദാ: Koruthodu)" onkeypress="handleSearchKeyPress(event)">
+        </div>
+        <div class="search-field survey-field">
+            <i class="fa-solid fa-hashtag"></i>
+            <input type="text" id="surveySearchInput" placeholder="സർവ്വേ നമ്പർ" onkeypress="handleSearchKeyPress(event)">
+        </div>
+        <button class="search-btn" onclick="performCombinedSearch()" title="തിരയുക">
+            <i class="fa-solid fa-search"></i>
+        </button>
+    </div>
+
+    <!-- ലൈവ് കോമ്പസ് (Live Compass Widget) -->
+    <div id="compassWidget" class="compass-widget" onclick="enableCompassSensor()" title="ദിശ കാണിക്കുന്ന കോമ്പസ് (വടക്ക് - North)">
+        <div id="compassDial" class="compass-dial">
+            <svg viewBox="0 0 100 100">
+                <!-- Outer subtle ring -->
+                <circle cx="50" cy="50" r="46" fill="none" stroke="#cbd5e1" stroke-width="2" />
+                <!-- Cardinal ticks -->
+                <line x1="50" y1="4" x2="50" y2="10" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/>
+                <line x1="50" y1="90" x2="50" y2="96" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="90" y1="50" x2="96" y2="50" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="4" y1="50" x2="10" y2="50" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>
+
+                <!-- Direction Labels -->
+                <text x="50" y="22" text-anchor="middle" fill="#dc2626" font-size="15" font-weight="900" font-family="sans-serif">N</text>
+                <text x="50" y="86" text-anchor="middle" fill="#475569" font-size="11" font-weight="700" font-family="sans-serif">S</text>
+                <text x="83" y="54" text-anchor="middle" fill="#475569" font-size="11" font-weight="700" font-family="sans-serif">E</text>
+                <text x="17" y="54" text-anchor="middle" fill="#475569" font-size="11" font-weight="700" font-family="sans-serif">W</text>
+
+                <!-- North Red Needle -->
+                <polygon points="50,25 43,50 57,50" fill="#ef4444" />
+                <!-- South Dark Needle -->
+                <polygon points="50,75 43,50 57,50" fill="#334155" />
+                <!-- Center Pivot -->
+                <circle cx="50" cy="50" r="4.5" fill="#ffffff" stroke="#1e293b" stroke-width="2" />
+            </svg>
+        </div>
+        <div id="compassDegree" class="compass-degree-badge">0° N</div>
     </div>
 
     <div class="fab-container">
@@ -142,6 +246,87 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
+        // ---------- 0. Live Compass Logic ----------
+        let compassActive = false;
+        let currentHeading = 0;
+
+        function getCardinalDirection(angle) {
+            const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+            const index = Math.round(((angle %= 360) < 0 ? angle + 360 : angle) / 45) % 8;
+            return directions[index];
+        }
+
+        function updateCompassUI(heading) {
+            currentHeading = heading;
+            const dial = document.getElementById('compassDial');
+            const badge = document.getElementById('compassDegree');
+            const widget = document.getElementById('compassWidget');
+
+            if (dial && badge) {
+                // Rotate dial opposite to device heading so 'N' points to real magnetic North
+                dial.style.transform = `rotate(${-heading}deg)`;
+                const rounded = Math.round(heading);
+                const dir = getCardinalDirection(rounded);
+                badge.innerText = `${rounded}° ${dir}`;
+                widget.classList.add('active-sensor');
+            }
+        }
+
+        function handleOrientation(event) {
+            let heading = null;
+
+            // iOS devices provide webkitCompassHeading directly
+            if (typeof event.webkitCompassHeading !== 'undefined' && event.webkitCompassHeading !== null) {
+                heading = event.webkitCompassHeading;
+            } else if (event.absolute === true && event.alpha !== null) {
+                heading = 360 - event.alpha;
+            } else if (event.alpha !== null) {
+                heading = 360 - event.alpha;
+            }
+
+            if (heading !== null && !isNaN(heading)) {
+                heading = (heading + 360) % 360;
+                compassActive = true;
+                updateCompassUI(heading);
+            }
+        }
+
+        function initCompassListeners() {
+            if ('ondeviceorientationabsolute' in window) {
+                window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+            } else if ('ondeviceorientation' in window) {
+                window.addEventListener('deviceorientation', handleOrientation, true);
+            }
+        }
+
+        async function enableCompassSensor() {
+            // Request permission on iOS 13+ devices
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const response = await DeviceOrientationEvent.requestPermission();
+                    if (response === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation, true);
+                        showToast('കോമ്പസ് സജീവമായി! 🧭');
+                    } else {
+                        showToast('കോമ്പസ് അനുമതി നിഷേധിക്കപ്പെട്ടു.');
+                    }
+                } catch (err) {
+                    showToast('കോമ്പസ് സെൻസർ പിന്തുണയ്ക്കുന്നില്ല.');
+                }
+            } else {
+                initCompassListeners();
+                if (compassActive) {
+                    const dir = getCardinalDirection(Math.round(currentHeading));
+                    showToast(`ദിശ: ${Math.round(currentHeading)}° ${dir} (വടക്ക് സൂചി ചുവപ്പ് നിറത്തിൽ) 🧭`);
+                } else {
+                    showToast('മാപ്പിന്റെ മുകൾഭാഗം വടക്ക് (North - 0°) ദിശയാണ് 🧭');
+                }
+            }
+        }
+
+        // Start listening automatically on Android / supported browsers
+        initCompassListeners();
+
         // ---------- 1. PWA Install Logic ----------
         let deferredPrompt = null;
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -250,6 +435,10 @@
             { position: 'topright' }
         ).addTo(map);
 
+        // Layer to store searched/highlighted survey plot or marker
+        let searchResultLayer = L.layerGroup().addTo(map);
+        let lastGeocodedVillage = { name: '', lat: null, lon: null };
+
         // ---------- WMS Fetching Logic ----------
         async function getWMSFeaturesInfo(layerName, lat, lon, featureCount = 10, buffer = 5) {
             const size = map.getSize();
@@ -351,13 +540,13 @@
             return 'അജ്ഞാതം (Unknown)';
         }
 
-        // ---------- Map Click Event ----------
-        map.on('click', async function(e) {
-            const lat = e.latlng.lat;
-            const lon = e.latlng.lng;
+        // ---------- Inspect & Show Popup at Specific Lat/Lng ----------
+        async function inspectAndShowLocationPopup(lat, lon, customTitle = null) {
             const currentZoom = map.getZoom();
-
-            const loadingPopup = L.popup().setLatLng(e.latlng).setContent('<div style="text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> വിവരങ്ങൾ കണ്ടെത്തുന്നു...</div>').openOn(map);
+            const loadingPopup = L.popup()
+                .setLatLng([lat, lon])
+                .setContent('<div style="text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> വിവരങ്ങൾ കണ്ടെത്തുന്നു...</div>')
+                .openOn(map);
 
             let villageName = 'അജ്ഞാതം (Unknown)';
             let surveyNo = '';
@@ -398,6 +587,10 @@
                     villageName = bhuvanVillage;
                 }
 
+                if (customTitle && !surveyNo) {
+                    surveyNo = customTitle;
+                }
+
                 lastSelectedDetails = { village: villageName, survey: surveyNo, taluk: talukName, district: districtName, lat: lat, lon: lon };
 
                 let popupContent = `<div style="font-size: 14px; line-height: 1.8;"><b>🏘️ വില്ലേജ്:</b> ${villageName}<br>`;
@@ -417,45 +610,339 @@
             } catch (error) {
                 loadingPopup.setContent('<span style="color:#ef4444;">വിവരങ്ങൾ കണ്ടെത്താൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.</span>');
             }
-        });
-
-        // ---------- Village Search ----------
-        function searchVillage() {
-            const query = document.getElementById('villageSearchInput').value;
-            if (!query) return;
-            map.stopLocate();
-            map.closePopup();
-            const loadingPopup = L.popup().setLatLng(map.getCenter()).setContent('<div style="text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> തിരയുന്നു...</div>').openOn(map);
-            const searchQuery = query + " village Kerala";
-            
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.length > 0) {
-                        const lat = parseFloat(data[0].lat);
-                        const lon = parseFloat(data[0].lon);
-                        map.setView([lat, lon], 16); 
-                        L.marker([lat, lon]).addTo(map).bindPopup(`<b>${data[0].display_name}</b>`).openPopup();
-                        loadingPopup.close();
-                    } else {
-                        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`)
-                            .then(res => res.json())
-                            .then(fallbackData => {
-                                if (fallbackData && fallbackData.length > 0) {
-                                    const lat = parseFloat(fallbackData[0].lat);
-                                    const lon = parseFloat(fallbackData[0].lon);
-                                    map.setView([lat, lon], 16);
-                                    L.marker([lat, lon]).addTo(map).bindPopup(`<b>${fallbackData[0].display_name}</b>`).openPopup();
-                                    loadingPopup.close();
-                                } else {
-                                    loadingPopup.setContent('<span style="color:#ef4444;">വില്ലേജ് കണ്ടെത്താൻ കഴിഞ്ഞില്ല. ഇംഗ്ലീഷിൽ ടൈപ്പ് ചെയ്യുക.</span>');
-                                }
-                            });
-                    }
-                }).catch(() => loadingPopup.setContent('<span style="color:#ef4444;">തിരയൽ പരാജയപ്പെട്ടു.</span>'));
         }
 
-        function handleVillageKeyPress(event) { if (event.key === 'Enter') searchVillage(); }
+        // ---------- Map Click Event ----------
+        map.on('click', function(e) {
+            inspectAndShowLocationPopup(e.latlng.lat, e.latlng.lng);
+        });
+
+        // ---------- Village & Survey Number Combined Search ----------
+        function handleSearchKeyPress(event) {
+            if (event.key === 'Enter') performCombinedSearch();
+        }
+
+        async function performCombinedSearch() {
+            const villageQuery = document.getElementById('villageSearchInput').value.trim();
+            const surveyQuery = document.getElementById('surveySearchInput').value.trim();
+
+            if (!villageQuery && !surveyQuery) {
+                showToast('ദയവായി വില്ലേജ് പേരോ സർവ്വേ നമ്പറോ നൽകുക.');
+                return;
+            }
+
+            map.stopLocate();
+            map.closePopup();
+            searchResultLayer.clearLayers();
+
+            const loadingPopup = L.popup()
+                .setLatLng(map.getCenter())
+                .setContent('<div style="text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> തിരയുന്നു...</div>')
+                .openOn(map);
+
+            let targetLat = map.getCenter().lat;
+            let targetLon = map.getCenter().lng;
+
+            // Step 1: If Village name is entered, check if we need to move the map
+            if (villageQuery) {
+                const isSameVillage = lastGeocodedVillage.name.toLowerCase() === villageQuery.toLowerCase() && lastGeocodedVillage.lat !== null;
+                const vCoords = isSameVillage ? lastGeocodedVillage : await geocodeVillageName(villageQuery);
+
+                if (vCoords) {
+                    lastGeocodedVillage = { name: villageQuery, lat: vCoords.lat, lon: vCoords.lon };
+                    const distFromCurrentCenter = map.distance(map.getCenter(), L.latLng(vCoords.lat, vCoords.lon));
+
+                    // If user is more than 4km away from the village (or only searching village), move map to village
+                    if (!surveyQuery || distFromCurrentCenter > 4000) {
+                        targetLat = vCoords.lat;
+                        targetLon = vCoords.lon;
+                        map.setView([targetLat, targetLon], surveyQuery ? 16 : 15);
+                    } else {
+                        // User is already looking at the village area; search around their current map view first
+                        targetLat = map.getCenter().lat;
+                        targetLon = map.getCenter().lng;
+                    }
+                } else if (!surveyQuery) {
+                    loadingPopup.setContent('<span style="color:#ef4444;">വില്ലേജ് കണ്ടെത്താൻ കഴിഞ്ഞില്ല. ഇംഗ്ലീഷിൽ ടൈപ്പ് ചെയ്യുക.</span>');
+                    return;
+                }
+            }
+
+            // Step 2: If only Village was entered, mark the village and stop
+            if (!surveyQuery) {
+                loadingPopup.close();
+                L.marker([targetLat, targetLon]).addTo(searchResultLayer)
+                    .bindPopup(`<b>🏘️ ${villageQuery}</b>`).openPopup();
+                return;
+            }
+
+            // Step 3: Search for the Survey Number around current view & village center
+            const updateSearchStatus = (msg) => {
+                loadingPopup.setLatLng(map.getCenter())
+                    .setContent(`<div style="text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> സർവ്വേ നമ്പർ <b>${surveyQuery}</b> തിരയുന്നു...<br><span style="font-size:11px; color:#64748b;">${msg}</span></div>`);
+            };
+
+            updateSearchStatus('മാപ്പ് പരിശോധിക്കുന്നു...');
+            let foundResult = await searchSurveyPlotInArea(surveyQuery, targetLat, targetLon, updateSearchStatus);
+
+            // If not found in current view and village center is slightly different, also check village center
+            if (!foundResult && lastGeocodedVillage.lat && map.distance([targetLat, targetLon], [lastGeocodedVillage.lat, lastGeocodedVillage.lon]) > 400) {
+                updateSearchStatus('വില്ലേജ് പരിധി പരിശോധിക്കുന്നു...');
+                foundResult = await searchSurveyPlotInArea(surveyQuery, lastGeocodedVillage.lat, lastGeocodedVillage.lon, updateSearchStatus);
+            }
+
+            if (foundResult) {
+                loadingPopup.close();
+                if (foundResult.geojson) {
+                    const geoLayer = L.geoJSON(foundResult.geojson, {
+                        style: {
+                            color: '#dc2626',
+                            weight: 3,
+                            fillColor: '#ef4444',
+                            fillOpacity: 0.35
+                        }
+                    }).addTo(searchResultLayer);
+                    const bounds = geoLayer.getBounds();
+                    const center = bounds.getCenter();
+                    map.fitBounds(bounds, { maxZoom: 18, padding: [40, 40] });
+                    inspectAndShowLocationPopup(center.lat, center.lng, foundResult.surveyNo);
+                } else if (foundResult.lat && foundResult.lon) {
+                    map.setView([foundResult.lat, foundResult.lon], 18);
+                    L.circleMarker([foundResult.lat, foundResult.lon], {
+                        radius: 14,
+                        color: '#dc2626',
+                        weight: 3,
+                        fillColor: '#ef4444',
+                        fillOpacity: 0.35
+                    }).addTo(searchResultLayer);
+                    inspectAndShowLocationPopup(foundResult.lat, foundResult.lon, foundResult.surveyNo);
+                }
+            } else {
+                loadingPopup.setLatLng(map.getCenter())
+                    .setContent(`<div style="color:#ef4444; font-size:13px; text-align:center;">
+                        <b>സർവ്വേ നമ്പർ (${surveyQuery}) കണ്ടെത്താനായില്ല!</b><br>
+                        <span style="color:#475569; font-size:12px;">നിങ്ങൾ തിരയുന്ന പ്രദേശത്തേക്ക് മാപ്പ് അല്പം കൂടി നീക്കി വീണ്ടും ശ്രമിക്കുക.</span>
+                    </div>`);
+            }
+        }
+
+        async function geocodeVillageName(query) {
+            try {
+                const searchQuery = query + " village Kerala";
+                let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`);
+                let data = await res.json();
+                if (data && data.length > 0) {
+                    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), name: data[0].display_name };
+                }
+                res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + " Kerala")}&limit=1`);
+                data = await res.json();
+                if (data && data.length > 0) {
+                    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), name: data[0].display_name };
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        function isSurveyMatch(candidateStr, targetStr) {
+            if (!candidateStr) return false;
+            const c = String(candidateStr).trim().toLowerCase();
+            const t = String(targetStr).trim().toLowerCase();
+            if (c === t) return true;
+            // Match main survey number if sub-division exists (e.g., searching "171" matches "171/1" or "171-A")
+            if (c.startsWith(t + '/') || c.startsWith(t + '-') || c.startsWith(t + ' ') || c.startsWith(t + '_')) return true;
+            return false;
+        }
+
+        // Helper to query WMS at virtual pixel (px, py) on a 1000x1000 canvas with both JSON and HTML support
+        async function queryWMSPoint(bboxStr, px, py, featureCount = 25, buffer = 25) {
+            const endpoints = [
+                'https://bhuvan-panchayat3.nrsc.gov.in/geoserver/v3/wms',
+                'https://bhuvan-panchayat3.nrsc.gov.in/geoserver/wms',
+                'https://bhuvan-panchayat3.nrsc.gov.in/geoserver/gwc/service/wms'
+            ];
+
+            for (const baseUrl of endpoints) {
+                try {
+                    const baseParams = `${baseUrl}?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=v3:cadastral&QUERY_LAYERS=v3:cadastral&SRS=EPSG:4326&BBOX=${bboxStr}&WIDTH=1000&HEIGHT=1000&X=${Math.round(px)}&Y=${Math.round(py)}&FEATURE_COUNT=${featureCount}&BUFFER=${buffer}`;
+                    
+                    // 1. Try JSON first
+                    const jsonRes = await fetch(`${baseParams}&INFO_FORMAT=application/json`);
+                    if (jsonRes.ok && (jsonRes.headers.get("content-type") || "").includes("json")) {
+                        const data = await jsonRes.json();
+                        if (data && data.features && data.features.length > 0) {
+                            return { type: 'json', features: data.features };
+                        }
+                    }
+
+                    // 2. Fallback to HTML parsing (Crucial for Bhuvan GeoServer)
+                    const htmlRes = await fetch(`${baseParams}&INFO_FORMAT=text/html`);
+                    if (htmlRes.ok) {
+                        const htmlText = await htmlRes.text();
+                        const parsedProps = parseHTMLFeatureInfo(htmlText);
+                        if (parsedProps.length > 0) {
+                            return { type: 'html', propertiesList: parsedProps };
+                        }
+                    }
+                } catch (e) {}
+            }
+            return null;
+        }
+
+        // Pin-point the exact plot coordinates around a matched grid point
+        async function refineExactSurveyPoint(surveyNo, bboxStr, minLon, minLat, maxLon, maxLat, basePx, basePy) {
+            const offsets = [
+                [0, 0], [-18, 0], [18, 0], [0, -18], [0, 18],
+                [-18, -18], [18, -18], [-18, 18], [18, 18],
+                [-35, 0], [35, 0], [0, -35], [0, 35]
+            ];
+
+            const promises = offsets.map(async ([dx, dy]) => {
+                const px = Math.max(5, Math.min(995, basePx + dx));
+                const py = Math.max(5, Math.min(995, basePy + dy));
+                const res = await queryWMSPoint(bboxStr, px, py, 3, 4);
+                if (!res) return null;
+
+                if (res.type === 'json') {
+                    for (const feat of res.features) {
+                        const sVal = extractSurveyNumber([feat.properties]);
+                        if (isSurveyMatch(sVal, surveyNo)) {
+                            if (feat.geometry) return { geojson: feat, surveyNo: sVal };
+                            const lon = minLon + (px / 1000) * (maxLon - minLon);
+                            const lat = maxLat - (py / 1000) * (maxLat - minLat);
+                            return { lat, lon, surveyNo: sVal };
+                        }
+                    }
+                } else if (res.type === 'html') {
+                    for (const props of res.propertiesList) {
+                        const sVal = extractSurveyNumber([props]);
+                        if (isSurveyMatch(sVal, surveyNo)) {
+                            const lon = minLon + (px / 1000) * (maxLon - minLon);
+                            const lat = maxLat - (py / 1000) * (maxLat - minLat);
+                            return { lat, lon, surveyNo: sVal };
+                        }
+                    }
+                }
+                return null;
+            });
+
+            const results = await Promise.all(promises);
+            return results.find(r => r !== null) || null;
+        }
+
+        async function searchSurveyPlotInArea(surveyNo, centerLat, centerLon, onStatus) {
+            // Use current visible map bounds if centerLat/Lon is within the screen, otherwise build a focused box
+            const currentBounds = map.getBounds();
+            let minLon, minLat, maxLon, maxLat;
+
+            if (currentBounds.contains([centerLat, centerLon]) && map.getZoom() >= 14) {
+                const sw = currentBounds.getSouthWest();
+                const ne = currentBounds.getNorthEast();
+                minLon = sw.lng; minLat = sw.lat;
+                maxLon = ne.lng; maxLat = ne.lat;
+            } else {
+                const delta = 0.009; // ~1km focused box
+                minLon = centerLon - delta;
+                minLat = centerLat - delta;
+                maxLon = centerLon + delta;
+                maxLat = centerLat + delta;
+            }
+
+            const bboxStr = `${minLon},${minLat},${maxLon},${maxLat}`;
+
+            // Step A: Try WFS GetFeature first (fastest if open)
+            const wfsEndpoints = [
+                'https://bhuvan-panchayat3.nrsc.gov.in/geoserver/v3/ows',
+                'https://bhuvan-panchayat3.nrsc.gov.in/geoserver/ows'
+            ];
+
+            for (const url of wfsEndpoints) {
+                try {
+                    const wfsUrl = `${url}?service=WFS&version=1.0.0&request=GetFeature&typeName=v3:cadastral&bbox=${bboxStr},EPSG:4326&maxFeatures=1000&outputFormat=application/json`;
+                    const res = await fetch(wfsUrl);
+                    if (res.ok && (res.headers.get("content-type") || "").includes("json")) {
+                        const data = await res.json();
+                        if (data && data.features && data.features.length > 0) {
+                            for (const feat of data.features) {
+                                const sVal = extractSurveyNumber([feat.properties]);
+                                if (isSurveyMatch(sVal, surveyNo)) {
+                                    return { geojson: feat, surveyNo: sVal };
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            // Step B: Dense Multi-Grid Scan (7x7 = 49 points covering the entire screen/area)
+            // Works with both JSON and HTML responses from Bhuvan WMS
+            const coords1D = [100, 230, 365, 500, 635, 770, 900];
+            const gridPoints = [];
+            for (const py of coords1D) {
+                for (const px of coords1D) {
+                    gridPoints.push([px, py]);
+                }
+            }
+            // Sort from center (500, 500) outward so plots near the center are found fastest
+            gridPoints.sort((a, b) => {
+                const da = Math.hypot(a[0] - 500, a[1] - 500);
+                const db = Math.hypot(b[0] - 500, b[1] - 500);
+                return da - db;
+            });
+
+            const batchSize = 10;
+            for (let i = 0; i < gridPoints.length; i += batchSize) {
+                if (onStatus) {
+                    const pct = Math.min(95, Math.round(((i + batchSize) / gridPoints.length) * 100));
+                    onStatus(`സ്കാൻ ചെയ്യുന്നു (${pct}%)...`);
+                }
+
+                const batch = gridPoints.slice(i, i + batchSize);
+                const batchPromises = batch.map(async ([px, py]) => {
+                    const res = await queryWMSPoint(bboxStr, px, py, 30, 35);
+                    if (!res) return null;
+
+                    if (res.type === 'json') {
+                        for (const feat of res.features) {
+                            const sVal = extractSurveyNumber([feat.properties]);
+                            if (isSurveyMatch(sVal, surveyNo)) {
+                                if (feat.geometry) {
+                                    return { geojson: feat, surveyNo: sVal };
+                                }
+                                return { px, py, surveyNo: sVal, needsRefinement: true };
+                            }
+                        }
+                    } else if (res.type === 'html') {
+                        for (const props of res.propertiesList) {
+                            const sVal = extractSurveyNumber([props]);
+                            if (isSurveyMatch(sVal, surveyNo)) {
+                                return { px, py, surveyNo: sVal, needsRefinement: true };
+                            }
+                        }
+                    }
+                    return null;
+                });
+
+                const batchResults = await Promise.all(batchPromises);
+                const hit = batchResults.find(r => r !== null);
+
+                if (hit) {
+                    if (hit.geojson) return hit;
+
+                    // Refine the exact location around (hit.px, hit.py) so marker lands directly inside the plot
+                    if (onStatus) onStatus('പ്ലോട്ട് ലൊക്കേഷൻ കൃത്യമാക്കുന്നു...');
+                    const refined = await refineExactSurveyPoint(
+                        surveyNo, bboxStr, minLon, minLat, maxLon, maxLat, hit.px, hit.py
+                    );
+                    if (refined) return refined;
+
+                    const estLon = minLon + (hit.px / 1000) * (maxLon - minLon);
+                    const estLat = maxLat - (hit.py / 1000) * (maxLat - minLat);
+                    return { lat: estLat, lon: estLon, surveyNo: hit.surveyNo };
+                }
+            }
+
+            return null;
+        }
 
         // ---------- Live GPS Tracking ----------
         let locationMarker, accuracyCircle;
@@ -490,3 +977,5 @@
     </script>
 </body>
 </html>
+
+```
