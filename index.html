@@ -631,19 +631,21 @@
             setTimeout(() => { toast.style.display = 'none'; }, 3800);
         }
 
-        // ---------- 3. Map Initialization ----------
+        // ---------- 3. Map Initialization (Increased Max Zoom) ----------
         const urlParams = new URLSearchParams(window.location.search);
         const initLat = parseFloat(urlParams.get('lat')) || 9.6675;
         const initLng = parseFloat(urlParams.get('lng')) || 76.8256;
         const initZoom = parseInt(urlParams.get('z')) || 15;
 
-        const map = L.map('map', { zoomControl: false }).setView([initLat, initLng], initZoom); 
+        // Set maxZoom to 21 for map object
+        const map = L.map('map', { zoomControl: false, maxZoom: 21 }).setView([initLat, initLng], initZoom); 
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
-        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles © Esri' });
-        const googleStreets = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '© Google' });
-        const googleHybrid = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '© Google Hybrid' });
+        // Added maxNativeZoom and maxZoom to ensure tile layers don't go blank at high zoom
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 21, maxNativeZoom: 19, attribution: '© OpenStreetMap' });
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 21, maxNativeZoom: 19, attribution: 'Tiles © Esri' });
+        const googleStreets = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 21, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '© Google' });
+        const googleHybrid = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', { maxZoom: 21, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '© Google Hybrid' });
 
         googleStreets.addTo(map);
 
@@ -651,11 +653,11 @@
         map.getPane('villagePane').style.filter = 'sepia(100%) hue-rotate(-45deg) saturate(400%) brightness(50%) contrast(150%)';
 
         const cadastralLayer = L.tileLayer.wms('https://bhuvan-panchayat3.nrsc.gov.in/geoserver/gwc/service/wms', {
-            layers: 'v3:cadastral', format: 'image/png', transparent: true, version: '1.1.1', minZoom: 8, maxZoom: 20
+            layers: 'v3:cadastral', format: 'image/png', transparent: true, version: '1.1.1', minZoom: 8, maxZoom: 21
         }).addTo(map);
 
         const bhuvanVillageLayer1 = L.tileLayer.wms('https://bhuvan-panchayat3.nrsc.gov.in/geoserver/gwc/service/wms', {
-            layers: 'v3:village', format: 'image/png', transparent: true, version: '1.1.1', minZoom: 5, maxZoom: 20, pane: 'villagePane'
+            layers: 'v3:village', format: 'image/png', transparent: true, version: '1.1.1', minZoom: 5, maxZoom: 21, pane: 'villagePane'
         }).addTo(map);
 
         L.control.layers(
@@ -736,7 +738,7 @@
                     }
                 },
                 () => showToast('GPS സിഗ്നൽ ലഭിക്കുന്നില്ല.'),
-                { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
             );
         }
 
@@ -913,7 +915,7 @@
 
         function jumpToSavedPlot(lat, lon, survey) {
             closeSavedPlotsModal();
-            map.setView([lat, lon], 18);
+            map.setView([lat, lon], 19); // Jump at high zoom
             inspectAndShowLocationPopup(lat, lon, survey);
         }
 
@@ -1039,7 +1041,7 @@
                 return;
             }
             closeCoordModal();
-            map.setView([lat, lng], 18);
+            map.setView([lat, lng], 19); // High Zoom level 19
             inspectAndShowLocationPopup(lat, lng);
         }
 
@@ -1253,7 +1255,7 @@
             if (coordMatch) {
                 const cLat = parseFloat(coordMatch[1]);
                 const cLon = parseFloat(coordMatch[3]);
-                map.setView([cLat, cLon], 18);
+                map.setView([cLat, cLon], 19);
                 inspectAndShowLocationPopup(cLat, cLon);
                 return;
             }
@@ -1281,7 +1283,7 @@
                     if (!surveyQuery || distFromCurrentCenter > 4000) {
                         targetLat = vCoords.lat;
                         targetLon = vCoords.lon;
-                        map.setView([targetLat, targetLon], surveyQuery ? 16 : 15);
+                        map.setView([targetLat, targetLon], surveyQuery ? 18 : 15);
                     } else {
                         targetLat = map.getCenter().lat;
                         targetLon = map.getCenter().lng;
@@ -1325,10 +1327,10 @@
                     }).addTo(searchResultLayer);
                     const bounds = geoLayer.getBounds();
                     const center = bounds.getCenter();
-                    map.fitBounds(bounds, { maxZoom: 18, padding: [40, 40] });
+                    map.fitBounds(bounds, { maxZoom: 19, padding: [40, 40] });
                     inspectAndShowLocationPopup(center.lat, center.lng, foundResult.surveyNo);
                 } else if (foundResult.lat && foundResult.lon) {
-                    map.setView([foundResult.lat, foundResult.lon], 18);
+                    map.setView([foundResult.lat, foundResult.lon], 19);
                     L.circleMarker([foundResult.lat, foundResult.lon], {
                         radius: 14,
                         color: '#dc2626',
@@ -1554,7 +1556,7 @@
             return null;
         }
 
-        // ---------- Live GPS Tracking (Improved Accuracy & Unlocked Map) ----------
+        // ---------- Live GPS Tracking (Maximum Accuracy & Unlocked Map) ----------
         let locationMarker = null, accuracyCircle = null;
         let locationWatchId = null;
         let hasCenteredOnLocation = false;
@@ -1566,21 +1568,20 @@
             }
 
             showToast("ഉയർന്ന കൃത്യതയിൽ ജിപിഎസ് കണ്ടെത്തുന്നു...");
-            hasCenteredOnLocation = false; // Center the map once per click
+            hasCenteredOnLocation = false;
 
-            // Clear existing watcher if any
             if (locationWatchId !== null) {
                 navigator.geolocation.clearWatch(locationWatchId);
             }
 
+            // Maximum Accuracy settings
             locationWatchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
-                    const accuracy = position.coords.accuracy;
+                    const accuracy = position.coords.accuracy; // in meters
                     const latlng = L.latLng(lat, lon);
 
-                    // Update or create the blue dot and accuracy circle
                     if (!locationMarker) {
                         accuracyCircle = L.circle(latlng, {
                             radius: accuracy,
@@ -1608,9 +1609,9 @@
                         accuracyCircle.setLatLng(latlng).setRadius(accuracy);
                     }
 
-                    // Only auto-center the map on the first location fix after clicking the button
+                    // Zoom to level 19 on first fix
                     if (!hasCenteredOnLocation) {
-                        map.setView(latlng, 18);
+                        map.setView(latlng, 19);
                         hasCenteredOnLocation = true;
                     }
                 },
@@ -1619,9 +1620,9 @@
                     showToast("ജിപിഎസ് സിഗ്നൽ ലഭിക്കുന്നില്ല അല്ലെങ്കിൽ അനുമതി നിഷേധിച്ചു.");
                 },
                 {
-                    enableHighAccuracy: true,
-                    maximumAge: 0, // Prevents using cached locations
-                    timeout: 15000
+                    enableHighAccuracy: true, // Force GPS hardware
+                    maximumAge: 0,            // Do not use cached location
+                    timeout: 15000            // Wait up to 15s for high accuracy
                 }
             );
         }
