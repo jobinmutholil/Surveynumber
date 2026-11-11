@@ -252,10 +252,36 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.25); text-align: center; max-width: 85%;
         }
 
+        /* ---------- Custom Location Marker (Google Maps Style) ---------- */
         .custom-location-marker {
-            background-color: #007bff; border: 2px solid white; border-radius: 50%;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
+        .custom-location-marker .dot {
+            width: 16px;
+            height: 16px;
+            background-color: #2563eb;
+            border: 2.5px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0,0,0,0.4);
+            position: relative;
+            z-index: 2;
+        }
+        .custom-location-marker .pulse-ring {
+            position: absolute;
+            width: 36px;
+            height: 36px;
+            background-color: rgba(37, 99, 235, 0.3);
+            border-radius: 50%;
+            z-index: 1;
+            animation: location-pulse 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes location-pulse {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
         .measure-vertex-marker {
             background-color: #f59e0b; border: 2px solid #ffffff; border-radius: 50%;
             box-shadow: 0 0 6px rgba(0,0,0,0.5);
@@ -530,7 +556,6 @@
 
         async function triggerInstall() {
             if (deferredPrompt) {
-                // ഒറ്റ പ്രെസ്സിൽ നേരിട്ട് ഇൻസ്റ്റാൾ ചെയ്യാൻ
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
                 if (outcome === 'accepted') {
@@ -741,7 +766,6 @@
             redrawMeasurement();
         }
 
-        // Geodesic spherical polygon area calculation in square meters
         function calculatePolygonAreaSqMeters(latlngs) {
             if (latlngs.length < 3) return 0;
             const earthRadius = 6378137;
@@ -802,7 +826,6 @@
             const sqMeters = measureMode === 'area' ? calculatePolygonAreaSqMeters(measurePoints) : 0;
             const distMeters = calculatePolylineDistanceMeters(measurePoints, measureMode === 'area');
 
-            // Kerala Land Conversions:
             const cents = sqMeters / 40.468564224;
             const ares = sqMeters / 100;
             const acres = cents / 100;
@@ -1531,26 +1554,81 @@
             return null;
         }
 
-        // ---------- Live GPS Tracking ----------
-        let locationMarker, accuracyCircle;
-        function onLocationFound(e) {
-            let radius = e.accuracy / 2;
-            if (locationMarker) map.removeLayer(locationMarker);
-            if (accuracyCircle) map.removeLayer(accuracyCircle);
-            accuracyCircle = L.circle(e.latlng, radius, { color: '#007bff', fillColor: '#007bff', fillOpacity: 0.15, weight: 2 }).addTo(map);
-            locationMarker = L.marker(e.latlng, { icon: L.divIcon({ className: 'custom-location-marker', iconSize: [16, 16], iconAnchor: [8, 8] }) }).addTo(map).bindPopup("നിങ്ങളുടെ ലൊക്കേഷൻ").openPopup();
-            map.setView(e.latlng, 17);
+        // ---------- Live GPS Tracking (Improved Accuracy & Unlocked Map) ----------
+        let locationMarker = null, accuracyCircle = null;
+        let locationWatchId = null;
+        let hasCenteredOnLocation = false;
+
+        function startLocationTracking() {
+            if (!navigator.geolocation) {
+                showToast("നിങ്ങളുടെ ഫോണിൽ GPS ലഭ്യമല്ല.");
+                return;
+            }
+
+            showToast("ഉയർന്ന കൃത്യതയിൽ ജിപിഎസ് കണ്ടെത്തുന്നു...");
+            hasCenteredOnLocation = false; // Center the map once per click
+
+            // Clear existing watcher if any
+            if (locationWatchId !== null) {
+                navigator.geolocation.clearWatch(locationWatchId);
+            }
+
+            locationWatchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+                    const latlng = L.latLng(lat, lon);
+
+                    // Update or create the blue dot and accuracy circle
+                    if (!locationMarker) {
+                        accuracyCircle = L.circle(latlng, {
+                            radius: accuracy,
+                            color: '#2563eb',
+                            fillColor: '#3b82f6',
+                            fillOpacity: 0.15,
+                            weight: 1.5,
+                            interactive: false
+                        }).addTo(map);
+
+                        const userIcon = L.divIcon({
+                            className: 'custom-location-marker',
+                            html: '<div class="pulse-ring"></div><div class="dot"></div>',
+                            iconSize: [24, 24],
+                            iconAnchor: [12, 12]
+                        });
+
+                        locationMarker = L.marker(latlng, {
+                            icon: userIcon,
+                            interactive: false,
+                            zIndexOffset: 1000
+                        }).addTo(map);
+                    } else {
+                        locationMarker.setLatLng(latlng);
+                        accuracyCircle.setLatLng(latlng).setRadius(accuracy);
+                    }
+
+                    // Only auto-center the map on the first location fix after clicking the button
+                    if (!hasCenteredOnLocation) {
+                        map.setView(latlng, 18);
+                        hasCenteredOnLocation = true;
+                    }
+                },
+                (error) => {
+                    console.warn("GPS Error: ", error);
+                    showToast("ജിപിഎസ് സിഗ്നൽ ലഭിക്കുന്നില്ല അല്ലെങ്കിൽ അനുമതി നിഷേധിച്ചു.");
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 0, // Prevents using cached locations
+                    timeout: 15000
+                }
+            );
         }
 
-        function onLocationError(e) { showToast("ലൊക്കേഷൻ ആക്സസ് നിഷേധിക്കപ്പെട്ടു. ജിപിഎസ് ഓൺ ചെയ്യുക."); }
-
-        map.on('locationfound', onLocationFound);
-        map.on('locationerror', onLocationError);
-
         document.getElementById('locateBtn').addEventListener('click', () => {
-            map.stopLocate(); 
             map.closePopup();
-            map.locate({setView: true, maxZoom: 17, enableHighAccuracy: true});
+            startLocationTracking();
         });
 
         // ---------- 9. Register Service Worker ----------
